@@ -4,37 +4,7 @@ EatMap is a map-first Hyderabad food discovery app. The repo is now split into:
 
 - `frontend/` - the current single-page map UI and local Node static/proxy server.
 - `backend/` - FastAPI API with JWT auth, Google-login endpoint, places, reviews, photos, lists, occasions, filters, and heatmap data.
-
-## Run Locally
-
-Terminal 1:
-
-```bash
-cd backend
-python -m venv .venv
-.venv\Scripts\activate
-pip install -r requirements.txt
-copy .env.example .env
-uvicorn app.main:app --reload --port 8000
-```
-
-Terminal 2:
-
-```bash
-npm run dev
-```
-
-Open:
-
-```text
-http://localhost:3000
-```
-
-API docs:
-
-```text
-http://localhost:8000/docs
-```
+- 
 
 ## Map Provider
 
