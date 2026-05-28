@@ -885,9 +885,10 @@ input,textarea{font-family:'Plus Jakarta Sans',sans-serif}
 <div class="toast" id="toast"></div>
 
 <script src="https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
 /* ── DATA ── */
-const PINS=[
+let PINS=[
   {id:1,name:'Paradise',cat:'biryani',emoji:'🍛',rating:4.9,reviews:8900,score:9.4,x:57,y:26,area:'Secunderabad',food:4.9,ambience:3.8,service:4.5,value:4.8,wait:3.2,tags:['dum biryani','iconic','must-try','Open now','Legend'],ai:"People swear by the dum biryani — it's the real deal. Ambience is old-school and functional. Long queues on weekends but always worth it. Skip the dessert.",photos:['🍛 Food','🏠 Interior','✨ Ambience','📋 Menu','📍 Street view']},
   {id:2,name:'Nimrah Cafe',cat:'cafe',emoji:'☕',rating:4.7,reviews:3200,score:8.9,x:10,y:78,area:'Old City',food:4.7,ambience:4.2,service:4.1,value:4.9,wait:3.8,tags:['irani chai','osmania biscuits','iconic','Open till late'],ai:'The OG Irani chai experience. Osmania biscuits are mandatory. Gets packed post-midnight. Cash only — and that is the charm.',photos:['☕ Chai','🏠 Interior','🍪 Snacks','📍 Street view']},
   {id:3,name:'Farzi Cafe',cat:'rooftop',emoji:'🌃',rating:4.5,reviews:2100,score:8.7,x:38,y:48,area:'Banjara Hills',food:4.4,ambience:4.8,service:4.3,value:3.9,wait:4.0,tags:['rooftop','molecular','cocktails','upscale'],ai:"Stunning views + molecular gastronomy = a solid date night. Cocktails are the real highlight. Book in advance on weekends.",photos:['🌃 View','🍽 Food','🍹 Cocktails','✨ Ambience']},
@@ -901,12 +902,12 @@ const PINS=[
   {id:11,name:'Cream Stone',cat:'cafe',emoji:'☕',rating:4.3,reviews:2300,score:8.1,x:48,y:36,area:'Banjara Hills',food:4.4,ambience:4.1,service:4.0,value:4.2,wait:4.0,tags:['dessert cafe','ice cream','date spot','Open late'],ai:"Hyderabad's favourite dessert cafe. Custom ice cream combos are absurdly good. Great date spot.",photos:['🍦 Dessert','🏠 Interior','📍 Exterior']},
   {id:12,name:'Rayalaseema Ruchulu',cat:'tiffin',emoji:'🥘',rating:4.5,reviews:3800,score:8.7,x:68,y:32,area:'Madhapur',food:4.7,ambience:3.6,service:4.2,value:4.8,wait:3.6,tags:['Andhra food','biryani','tiffin','spicy'],ai:"Fiery Andhra food done right — the gongura mutton alone is worth the trip. No-frills, generous portions, wallet-friendly.",photos:['🥘 Food','🍽 Thali','📍 Street']}
 ];
-const MY_LISTS=[
+let MY_LISTS=[
   {name:'Best Biryanis 2025',emoji:'🍛',count:7,vis:'public',desc:'My all-time faves'},
   {name:'WFH Cafe Circuit',emoji:'💻',count:5,vis:'public',desc:'WiFi + great chai'},
   {name:'Date Night Spots',emoji:'💑',count:4,vis:'private',desc:'Personal faves'},
 ];
-const COMM_LISTS=[
+let COMM_LISTS=[
   {name:'Hidden Gems HYD',emoji:'💎',count:11,vis:'public',saves:234,desc:'Off-the-beaten-path'},
   {name:'Old City Must-Do',emoji:'🏰',count:9,vis:'public',saves:187,desc:'Authentic HYD'},
   {name:'IT Crowd Lunch',emoji:'🏢',count:13,vis:'public',saves:142,desc:'Hitech City & Madhapur'},
@@ -936,6 +937,67 @@ const PIN_COORDS={
   11:[78.4384,17.4138],
   12:[78.3918,17.4487]
 };
+
+const apiState={token:localStorage.getItem('eatmapToken')||'',placesByClientId:new Map()};
+function apiHeaders(extra={}){
+  return {...extra,...(apiState.token?{Authorization:'Bearer '+apiState.token}:{})};
+}
+async function apiFetch(path,options={}){
+  const res=await fetch('/api/v1'+path,{...options,headers:apiHeaders(options.headers||{})});
+  const data=await res.json().catch(()=>null);
+  if(!res.ok)throw new Error(data?.detail||data?.error||'Request failed');
+  return data;
+}
+function placeFromApi(place,index){
+  const clientId=index+1;
+  const pin={
+    id:clientId,
+    apiId:place.id,
+    name:place.name,
+    cat:place.category,
+    emoji:place.emoji||'🍽',
+    rating:place.rating,
+    reviews:place.reviews_count,
+    score:place.score,
+    x:place.map_x,
+    y:place.map_y,
+    area:place.area,
+    food:place.food_score,
+    ambience:place.ambience_score,
+    service:place.service_score,
+    value:place.value_score,
+    wait:place.wait_score,
+    tags:place.tags||[],
+    ai:place.ai_summary||'A community-rated EatMap place.',
+    photos:(place.photo_urls&&place.photo_urls.length?place.photo_urls:[`${place.emoji||'🍽'} Food`,`${place.emoji||'🍽'} Ambience`])
+  };
+  apiState.placesByClientId.set(clientId,place.id);
+  PIN_COORDS[clientId]=[place.longitude,place.latitude];
+  return pin;
+}
+async function bootstrapBackendData(){
+  try{
+    const places=await apiFetch('/places');
+    if(Array.isArray(places)&&places.length){
+      apiState.placesByClientId.clear();
+      PINS=places.map(placeFromApi);
+      renderPins(currentCat);
+      renderSearch();
+    }
+    if(apiState.token)await loadMyLists();
+  }catch(err){
+    console.info('Using local demo data:',err.message);
+  }
+}
+async function loadMyLists(){
+  try{
+    const lists=await apiFetch('/lists');
+    MY_LISTS=lists.map(l=>({apiId:l.id,name:l.name,emoji:l.emoji,count:l.items?.length||0,vis:l.visibility,desc:l.description||'Saved places'}));
+    if(document.getElementById('listsPanel').classList.contains('open'))renderLists();
+  }catch(err){
+    console.info('Could not load lists:',err.message);
+  }
+}
 
 let selPin=null,chatOpen=false,listVis='public',selEmoji='🍛',chatHistory=[];
 let atlPin=null,atlChecked=new Set();
@@ -1164,10 +1226,18 @@ function openCreateList(){
 function closeCreateList(){document.getElementById('createModal').classList.add('hid')}
 function pickEmoji(el,em){selEmoji=em;document.querySelectorAll('.emsel').forEach(e=>e.classList.remove('sel'));el.classList.add('sel')}
 function setVis(v){listVis=v;document.getElementById('vt-pub').classList.toggle('sel',v==='public');document.getElementById('vt-priv').classList.toggle('sel',v==='private')}
-function saveList(){
+async function saveList(){
   const name=document.getElementById('listName').value.trim();
   if(!name){document.getElementById('listName').style.borderColor='rgba(251,113,133,0.5)';setTimeout(()=>document.getElementById('listName').style.borderColor='',1200);return}
-  MY_LISTS.unshift({name,emoji:selEmoji,count:0,vis:listVis,desc:document.getElementById('listDesc').value.trim()||'New list'});
+  const desc=document.getElementById('listDesc').value.trim()||'New list';
+  if(apiState.token){
+    try{
+      const created=await apiFetch('/lists',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,emoji:selEmoji,visibility:listVis,description:desc})});
+      MY_LISTS.unshift({apiId:created.id,name:created.name,emoji:created.emoji,count:0,vis:created.visibility,desc:created.description||'New list'});
+    }catch(err){showToast(err.message);return}
+  }else{
+    MY_LISTS.unshift({name,emoji:selEmoji,count:0,vis:listVis,desc});
+  }
   closeCreateList();showToast('✅ List created: '+name);
   document.getElementById('listName').value='';document.getElementById('listDesc').value='';
 }
@@ -1191,9 +1261,18 @@ function toggleAtl(i){
   document.getElementById('atl-item-'+i).classList.toggle('checked',atlChecked.has(i));
   document.getElementById('atl-chk-'+i).textContent=atlChecked.has(i)?'✓':'';
 }
-function confirmAtl(){
+async function confirmAtl(){
   if(atlChecked.size===0){showToast('Pick at least one list');return}
-  atlChecked.forEach(i=>MY_LISTS[i].count++);
+  if(apiState.token&&atlPin?.apiId){
+    try{
+      for(const i of atlChecked){
+        if(MY_LISTS[i]?.apiId)await apiFetch(`/lists/${MY_LISTS[i].apiId}/items`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({place_id:atlPin.apiId})});
+      }
+      await loadMyLists();
+    }catch(err){showToast(err.message);return}
+  }else{
+    atlChecked.forEach(i=>MY_LISTS[i].count++);
+  }
   closeAtl();showToast('✅ Added to '+atlChecked.size+' list'+(atlChecked.size>1?'s':'')+'!');
 }
 
@@ -1206,11 +1285,16 @@ function markBeen(pid){
   if(sr)sr.style.display='flex';
   showToast('✅ Marked as visited!');
 }
-function setStar(pid,val){
+async function setStar(pid,val){
   starRatings[pid]=val;
   const sr=document.getElementById('stars-'+pid);
   if(!sr)return;
   sr.querySelectorAll('.star').forEach((s,i)=>s.classList.toggle('lit',i<val));
+  const pin=PINS.find(p=>p.id===pid);
+  if(apiState.token&&pin?.apiId){
+    try{await apiFetch(`/places/${pin.apiId}/reviews`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({rating:val})});}
+    catch(err){showToast(err.message);return}
+  }
   showToast('Rated '+val+'★ — thanks!');
 }
 
@@ -1234,14 +1318,42 @@ function switchTab(mode){
   document.getElementById('authSubmitBtn').textContent=mode==='signin'?'Sign in':'Create account';
   document.getElementById('authName').style.display=mode==='signup'?'block':'none';
 }
-function oauthLogin(){
-  closeAuth();showToast('✅ Signed in with Google!');
-  document.getElementById('btnSignIn').textContent='My Profile';
-  document.getElementById('btnSignIn').onclick=()=>openProfile();
+async function oauthLogin(){
+  try{
+    const cfg=await fetch('/api/config').then(r=>r.json());
+    if(!cfg.googleClientId){showToast('Set GOOGLE_CLIENT_ID to enable Google login');return}
+    if(!window.google?.accounts?.id){showToast('Google login script is still loading');return}
+    google.accounts.id.initialize({
+      client_id:cfg.googleClientId,
+      callback:async response=>{
+        try{
+          const data=await apiFetch('/auth/google',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id_token:response.credential})});
+          apiState.token=data.access_token;
+          localStorage.setItem('eatmapToken',apiState.token);
+          await loadMyLists();
+          closeAuth();showToast('✅ Signed in with Google!');
+          document.getElementById('btnSignIn').textContent='My Profile';
+          document.getElementById('btnSignIn').onclick=()=>openProfile();
+        }catch(err){showToast(err.message)}
+      }
+    });
+    google.accounts.id.prompt();
+  }catch(err){showToast(err.message)}
 }
-function emailLogin(){
+async function emailLogin(){
   const email=document.getElementById('authEmail').value.trim();
+  const password=document.getElementById('authPass').value;
+  const name=document.getElementById('authName').value.trim()||email.split('@')[0];
   if(!email){showToast('Enter your email');return}
+  if(!password){showToast('Enter your password');return}
+  try{
+    const path=authMode==='signin'?'/auth/login':'/auth/signup';
+    const body=authMode==='signin'?{email,password}:{email,password,name};
+    const data=await apiFetch(path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    apiState.token=data.access_token;
+    localStorage.setItem('eatmapToken',apiState.token);
+    await loadMyLists();
+  }catch(err){showToast(err.message);return}
   closeAuth();showToast(authMode==='signin'?'✅ Welcome back!':'✅ Account created!');
   document.getElementById('btnSignIn').textContent='My Profile';
   document.getElementById('btnSignIn').onclick=()=>openProfile();
@@ -1438,6 +1550,7 @@ function highlightSearch(results){
 initEatMap();
 renderPins();
 initMapDrag();
+bootstrapBackendData();
 </script>
 </body>
 </html>

@@ -4,8 +4,9 @@
   "private": true,
   "description": "Map-first Hyderabad food discovery prototype.",
   "scripts": {
-    "dev": "node --watch server.js",
-    "start": "node server.js"
+    "dev": "node --watch frontend/server.js",
+    "start": "node frontend/server.js",
+    "backend": "cd backend && uvicorn app.main:app --reload --port 8000"
   },
   "engines": {
     "node": ">=18"

@@ -4,10 +4,14 @@ const fsp = require('node:fs/promises');
 const path = require('node:path');
 
 const root = __dirname;
+const workspaceRoot = path.resolve(root, '..');
 
 function loadEnvFile() {
   try {
-    const env = fs.readFileSync(path.join(root, '.env'), 'utf8');
+    const envPath = fs.existsSync(path.join(root, '.env'))
+      ? path.join(root, '.env')
+      : path.join(workspaceRoot, '.env');
+    const env = fs.readFileSync(envPath, 'utf8');
     for (const line of env.split(/\r?\n/)) {
       const trimmed = line.trim();
       if (!trimmed || trimmed.startsWith('#')) continue;
@@ -26,6 +30,7 @@ loadEnvFile();
 
 const port = Number(process.env.PORT || 3000);
 const anthropicModel = process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-20250514';
+const backendUrl = process.env.BACKEND_URL || 'http://localhost:8000';
 
 const contentTypes = new Map([
   ['.html', 'text/html; charset=utf-8'],
@@ -45,10 +50,20 @@ function sendJson(res, status, payload) {
   res.end(JSON.stringify(payload));
 }
 
+function handleConfig(res) {
+  sendJson(res, 200, {
+    googleClientId: process.env.GOOGLE_CLIENT_ID || '',
+  });
+}
+
 async function readBody(req) {
+  return (await readRawBody(req)).toString('utf8');
+}
+
+async function readRawBody(req) {
   const chunks = [];
   for await (const chunk of req) chunks.push(chunk);
-  return Buffer.concat(chunks).toString('utf8');
+  return Buffer.concat(chunks);
 }
 
 async function handleChat(req, res) {
@@ -103,6 +118,21 @@ async function handleChat(req, res) {
   }
 }
 
+async function proxyBackend(req, res) {
+  const target = new URL(req.url, backendUrl);
+  try {
+    const headers = { ...req.headers, host: target.host };
+    delete headers['content-length'];
+    const body = req.method === 'GET' || req.method === 'HEAD' ? undefined : await readRawBody(req);
+    const upstream = await fetch(target, { method: req.method, headers, body });
+    const buffer = Buffer.from(await upstream.arrayBuffer());
+    res.writeHead(upstream.status, Object.fromEntries(upstream.headers.entries()));
+    res.end(buffer);
+  } catch {
+    sendJson(res, 502, { error: 'EatMap backend is not reachable. Start FastAPI on port 8000.' });
+  }
+}
+
 async function serveStatic(req, res) {
   const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
   const requested = url.pathname === '/' ? '/eatmap.html' : decodeURIComponent(url.pathname);
@@ -129,6 +159,14 @@ async function serveStatic(req, res) {
 const server = http.createServer((req, res) => {
   if (req.url?.startsWith('/api/chat')) {
     handleChat(req, res);
+    return;
+  }
+  if (req.url?.startsWith('/api/config')) {
+    handleConfig(res);
+    return;
+  }
+  if (req.url?.startsWith('/api/v1/')) {
+    proxyBackend(req, res);
     return;
   }
 
