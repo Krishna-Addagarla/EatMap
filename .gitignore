@@ -3,6 +3,10 @@ node_modules/
 *.db
 backend/uploads/
 backend/.venv/
+backend/venv/
+frontend/dist/
+dist/
 __pycache__/
+*.pyc
 .DS_Store
 Thumbs.db

@@ -6,7 +6,23 @@
   "scripts": {
     "dev": "node --watch frontend/server.js",
     "start": "node frontend/server.js",
-    "backend": "cd backend && uvicorn app.main:app --reload --port 8000"
+    "backend": "cd backend && venv\\Scripts\\uvicorn app.main:app --reload --port 8000",
+    "frontend-dev": "vite --config frontend/vite.config.ts",
+    "build": "tsc && vite build --config frontend/vite.config.ts"
+  },
+  "dependencies": {
+    "maplibre-gl": "^4.7.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "zustand": "^4.5.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.12",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.2.1",
+    "typescript": "^5.4.5",
+    "vite": "^5.2.11"
   },
   "engines": {
     "node": ">=18"

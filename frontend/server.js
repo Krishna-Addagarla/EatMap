@@ -135,10 +135,21 @@ async function proxyBackend(req, res) {
 
 async function serveStatic(req, res) {
   const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
-  const requested = url.pathname === '/' ? '/eatmap.html' : decodeURIComponent(url.pathname);
-  const filePath = path.resolve(root, `.${requested}`);
+  
+  const distDir = path.join(root, 'dist');
+  const isDist = fs.existsSync(distDir);
+  const staticRoot = isDist ? distDir : root;
 
-  if (!filePath.startsWith(root)) {
+  let requested = decodeURIComponent(url.pathname);
+  const hasExt = path.extname(requested) !== '';
+
+  if (requested === '/' || !hasExt) {
+    requested = '/index.html';
+  }
+
+  const filePath = path.resolve(staticRoot, `.${requested}`);
+
+  if (!filePath.startsWith(staticRoot)) {
     res.writeHead(403);
     res.end('Forbidden');
     return;
@@ -151,6 +162,14 @@ async function serveStatic(req, res) {
     });
     res.end(body);
   } catch {
+    if (!hasExt) {
+      try {
+        const indexHtml = await fsp.readFile(path.join(staticRoot, 'index.html'));
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+        res.end(indexHtml);
+        return;
+      } catch {}
+    }
     res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
     res.end('Not found');
   }
