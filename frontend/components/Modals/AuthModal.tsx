@@ -13,7 +13,7 @@ export const AuthModal: React.FC = () => {
 
   const handleOAuthLogin = async () => {
     try {
-      const cfg = await fetch('/api/config').then((r) => r.json());
+      const cfg = await fetch('/api/v1/config').then((r) => r.json());
       if (!cfg.googleClientId) {
         showToast('Set GOOGLE_CLIENT_ID to enable Google login');
         return;

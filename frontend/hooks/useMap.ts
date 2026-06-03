@@ -22,13 +22,14 @@ export function useMap() {
     let mapInstance: maplibregl.Map | null = null;
     let loadTimeout: NodeJS.Timeout;
 
-    // Start a 2.8-second safety timer. If MapLibre doesn't load within this time, trigger SVG fallback.
+    // Start an 8-second safety timer. If MapLibre doesn't load within this time, trigger SVG fallback.
     loadTimeout = setTimeout(() => {
       if (!mapStore.eatMap) {
         console.warn('MapLibre took too long to load tiles. Falling back to SVG view.');
+        useUserStore.getState().showToast('Map loading timed out. Showing fallback layout.');
         setUseFallback(true);
       }
-    }, 2800);
+    }, 8000);
     
     try {
       mapInstance = new maplibregl.Map({
@@ -71,8 +72,9 @@ export function useMap() {
         }
       });
 
-    } catch (err) {
+    } catch (err: any) {
       console.warn('MapLibre GL failed to initialize. Using SVG fallback view:', err);
+      useUserStore.getState().showToast(`Map failed: ${err?.message || String(err)}`);
       clearTimeout(loadTimeout);
       setUseFallback(true);
     }

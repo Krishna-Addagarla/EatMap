@@ -173,7 +173,11 @@ export const MapView: React.FC<MapViewProps> = ({ pins, onSelectPin }) => {
           viewBox="0 0 1400 800"
           preserveAspectRatio="xMidYMid slice"
           xmlns="http://www.w3.org/2000/svg"
-          style={{ transform: `translate(${panOffset.x * 0.15}px, ${panOffset.y * 0.15}px)`, transition: 'transform 0.05s' }}
+          style={{
+            transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${fallbackScale})`,
+            transformOrigin: 'center center',
+            transition: 'transform 0.05s'
+          }}
         >
           <rect width="1400" height="800" fill="#080808" />
           <g stroke="#111" strokeWidth="16" fill="none">
@@ -232,11 +236,11 @@ export const MapView: React.FC<MapViewProps> = ({ pins, onSelectPin }) => {
       {/* Fallback Area Labels */}
       {useFallback && (
         <>
-          <div className="alabel" style={{ left: '12%', top: '24%', transform: `translate(${panOffset.x * 0.08}px, ${panOffset.y * 0.08}px)` }}>Jubilee Hills</div>
-          <div className="alabel" style={{ left: '42%', top: '35%', transform: `translate(${panOffset.x * 0.08}px, ${panOffset.y * 0.08}px)` }}>Banjara Hills</div>
-          <div className="alabel" style={{ left: '68%', top: '64%', transform: `translate(${panOffset.x * 0.08}px, ${panOffset.y * 0.08}px)` }}>Begumpet</div>
-          <div className="alabel" style={{ left: '55%', top: '48%', transform: `translate(${panOffset.x * 0.08}px, ${panOffset.y * 0.08}px)` }}>Secunderabad</div>
-          <div className="alabel" style={{ left: '15%', top: '68%', transform: `translate(${panOffset.x * 0.08}px, ${panOffset.y * 0.08}px)` }}>Old City</div>
+          <div className="alabel" style={{ left: '22%', top: '32%', transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${fallbackScale})`, transformOrigin: 'center center' }}>Jubilee Hills</div>
+          <div className="alabel" style={{ left: '38%', top: '48%', transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${fallbackScale})`, transformOrigin: 'center center' }}>Banjara Hills</div>
+          <div className="alabel" style={{ left: '45%', top: '37%', transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${fallbackScale})`, transformOrigin: 'center center' }}>Begumpet</div>
+          <div className="alabel" style={{ left: '57%', top: '26%', transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${fallbackScale})`, transformOrigin: 'center center' }}>Secunderabad</div>
+          <div className="alabel" style={{ left: '10%', top: '78%', transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${fallbackScale})`, transformOrigin: 'center center' }}>Old City</div>
         </>
       )}
 

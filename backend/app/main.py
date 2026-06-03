@@ -6,7 +6,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.config import get_settings
 from app.database import SessionLocal, create_db
-from app.routers import auth, lists, occasions, places, reviews
+from app.routers import auth, chat, lists, occasions, places, reviews
 from app.seed import seed_database
 
 
@@ -21,9 +21,11 @@ async def lifespan(app: FastAPI):
 settings = get_settings()
 app = FastAPI(title=settings.app_name, version="0.1.0", lifespan=lifespan)
 
+origins = ["*"] if settings.environment in ("local", "dev", "development") else settings.backend_cors_origins
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.backend_cors_origins,
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -33,10 +35,16 @@ settings.media_root.mkdir(parents=True, exist_ok=True)
 app.mount(settings.public_media_base_url, StaticFiles(directory=settings.media_root), name="media")
 
 app.include_router(auth.router, prefix="/api/v1")
+app.include_router(chat.router, prefix="/api/v1")
 app.include_router(places.router, prefix="/api/v1")
 app.include_router(reviews.router, prefix="/api/v1")
 app.include_router(lists.router, prefix="/api/v1")
 app.include_router(occasions.router, prefix="/api/v1")
+
+
+@app.get("/api/v1/config")
+async def get_config() -> dict[str, str]:
+    return {"googleClientId": settings.google_client_id or ""}
 
 
 @app.get("/health")

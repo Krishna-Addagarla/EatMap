@@ -4,10 +4,8 @@
   "private": true,
   "description": "Map-first Hyderabad food discovery prototype.",
   "scripts": {
-    "dev": "node --watch frontend/server.js",
-    "start": "node frontend/server.js",
+    "dev": "vite --config frontend/vite.config.ts",
     "backend": "cd backend && venv\\Scripts\\uvicorn app.main:app --reload --port 8000",
-    "frontend-dev": "vite --config frontend/vite.config.ts",
     "build": "tsc && vite build --config frontend/vite.config.ts"
   },
   "dependencies": {

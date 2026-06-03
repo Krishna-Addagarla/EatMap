@@ -1,11 +1,17 @@
 import { ChatMessage } from '../types';
 
 export async function sendChatMessage(system: string, messages: ChatMessage[]): Promise<any> {
-  const res = await fetch('/api/chat', {
+  const token = localStorage.getItem('eatmapToken') || '';
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json'
+  };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const res = await fetch('/api/v1/chat', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
+    headers,
     body: JSON.stringify({ system, messages })
   });
 
