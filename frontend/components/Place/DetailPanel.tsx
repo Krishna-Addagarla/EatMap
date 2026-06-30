@@ -52,6 +52,7 @@ export const DetailPanel: React.FC<DetailPanelProps> = ({
 
   const hasOpen = pin.tags.includes('Open now');
   const legendBadge = pin.tags.find((t) => ['Legend', 'New', 'Trending'].includes(t));
+  const cuisineText = pin.cuisines?.length ? pin.cuisines.join(', ') : pin.cat;
 
   return (
     <div className={`dp ${pin ? 'open' : ''}`}>
@@ -77,12 +78,44 @@ export const DetailPanel: React.FC<DetailPanelProps> = ({
               ))}
               {hasOpen && <span className="dtag dtag-g">● Open now</span>}
               {legendBadge && <span className="dtag dtag-a">👑 {legendBadge}</span>}
+              {pin.rank && <span className="dtag dtag-a">Rank #{pin.rank}</span>}
             </div>
           </div>
           <div className="score-box">
             <div className="score-num">{pin.score}</div>
             <div className="score-lbl">EatMap Score</div>
           </div>
+        </div>
+
+        <div className="dp-facts">
+          <div className="fact">
+            <div className="fact-lbl">Cuisine</div>
+            <div className="fact-val">{cuisineText}</div>
+          </div>
+          {pin.costForTwo && (
+            <div className="fact">
+              <div className="fact-lbl">Cost</div>
+              <div className="fact-val">{pin.costForTwo}</div>
+            </div>
+          )}
+          {pin.hours && (
+            <div className="fact">
+              <div className="fact-lbl">Hours</div>
+              <div className="fact-val">{pin.hours}</div>
+            </div>
+          )}
+          {pin.distance && (
+            <div className="fact">
+              <div className="fact-lbl">Distance</div>
+              <div className="fact-val">{pin.distance}</div>
+            </div>
+          )}
+          {pin.collection && (
+            <div className="fact">
+              <div className="fact-lbl">Collection</div>
+              <div className="fact-val">{pin.collection}</div>
+            </div>
+          )}
         </div>
 
         <div className="dp-actions">

@@ -15,7 +15,12 @@ export function useSearch(pins: Pin[], onSelectPin: (pin: Pin) => void) {
         p.name.toLowerCase().includes(q) ||
         p.cat.toLowerCase().includes(q) ||
         p.area.toLowerCase().includes(q) ||
-        p.tags.some((t) => t.toLowerCase().includes(q))
+        p.tags.some((t) => t.toLowerCase().includes(q)) ||
+        p.cuisines?.some((cuisine) => cuisine.toLowerCase().includes(q)) ||
+        p.source?.toLowerCase().includes(q) ||
+        p.restaurantType?.toLowerCase().includes(q) ||
+        p.costForTwo?.toLowerCase().includes(q) ||
+        p.collection?.toLowerCase().includes(q)
     );
   }, [pins, query]);
 

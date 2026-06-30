@@ -11,6 +11,7 @@ import { TopBar } from '../components/Layout/TopBar';
 import { Sidebar } from '../components/Sidebar/Sidebar';
 import { MapView } from '../components/Map/MapView';
 import { DetailPanel } from '../components/Place/DetailPanel';
+import { BestRestaurantsRail } from '../components/Place/BestRestaurantsRail';
 import { ChatPanel } from '../components/Chat/ChatPanel';
 import { SearchOverlay } from '../components/Search/SearchOverlay';
 
@@ -83,6 +84,9 @@ export const HomePage: React.FC = () => {
     }
   }, [toastShow]);
 
+  const activeCategoryMeta = CATEGORIES.find((cat) => cat.id === activeCategory) || CATEGORIES[0];
+  const activeCategoryStyle = CATEGORY_STYLES[activeCategory] || { text: 'var(--text2)' };
+
   return (
     <div className="app">
       {/* Top Banner Navigation */}
@@ -117,6 +121,8 @@ export const HomePage: React.FC = () => {
 
           {/* Interactive Map */}
           <MapView pins={filteredPins} onSelectPin={handleSelectPin} />
+
+          <BestRestaurantsRail pins={pins} onSelectPin={handleSelectPin} />
 
           {/* Floating chatbot toggle button */}
           <button className="fab" onClick={() => setChatOpen(!chatOpen)}>
@@ -156,22 +162,24 @@ export const HomePage: React.FC = () => {
 
             <div className="filter-card">
               <div className="filter-card-title">Category</div>
-              <div className="cat-chips">
-                {CATEGORIES.map((cat) => {
-                  const isActive = activeCategory === cat.id;
-                  const cStyle = CATEGORY_STYLES[cat.id] || { text: '#fff' };
-                  
-                  return (
-                    <div
-                      key={cat.id}
-                      className={`cchip ${isActive ? 'active' : ''}`}
-                      onClick={() => setActiveCategory(cat.id)}
-                    >
-                      <span className="cdot" style={{ background: isActive ? 'var(--green)' : cStyle.text }}></span>
+              <div className="cat-select-wrap">
+                <span className="cat-select-dot" style={{ background: activeCategoryStyle.text }}></span>
+                <select
+                  className="cat-select"
+                  value={activeCategory}
+                  onChange={(e) => setActiveCategory(e.target.value)}
+                  aria-label="Category"
+                >
+                  {CATEGORIES.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
                       {cat.name}
-                    </div>
-                  );
-                })}
+                    </option>
+                  ))}
+                </select>
+                <span className="cat-select-arrow">⌄</span>
+              </div>
+              <div className="cat-select-current">
+                Showing {activeCategoryMeta.name.toLowerCase()}
               </div>
             </div>
           </div>

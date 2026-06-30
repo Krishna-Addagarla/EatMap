@@ -33,6 +33,7 @@ export const PinLayer: React.FC<PinLayerProps> = ({ pins, onSelectPin }) => {
               onSelectPin(p);
             }}
           >
+            {(p.rank || p.tags.includes('EatMap Best')) && <span className="pin-top">TOP</span>}
             <div
               className="ppill"
               style={{

@@ -41,6 +41,8 @@ export function usePins() {
       if (Array.isArray(places) && places.length) {
         const parsedPins: Pin[] = places.map((place, index) => {
           const clientId = index + 1;
+          const rankMatch = place.external_id?.match(/-(\d+)$/);
+          const isNightlife = place.external_id?.includes('nightlife');
           return {
             id: clientId,
             apiId: place.id,
@@ -64,7 +66,20 @@ export function usePins() {
               ? place.photo_urls
               : [`${place.emoji || '🍽'} Food`, `${place.emoji || '🍽'} Ambience`],
             latitude: place.latitude,
-            longitude: place.longitude
+            longitude: place.longitude,
+            source: place.external_provider ? 'EatMap Curated' : undefined,
+            sourceUrl: place.external_provider === 'zomato'
+              ? isNightlife
+                ? 'https://www.zomato.com/hyderabad/best-drinks-and-nightlife-restaurants'
+                : 'https://www.zomato.com/hyderabad/best-restaurants'
+              : undefined,
+            cuisines: place.cuisines || [],
+            restaurantType: place.restaurant_type,
+            rank: rankMatch ? Number(rankMatch[1]) : undefined,
+            costForTwo: place.tags?.find((tag: string) => tag.startsWith('Cost: '))?.replace('Cost: ', ''),
+            hours: place.tags?.find((tag: string) => tag.startsWith('Hours: '))?.replace('Hours: ', ''),
+            distance: place.tags?.find((tag: string) => tag.startsWith('Distance: '))?.replace('Distance: ', ''),
+            collection: place.tags?.find((tag: string) => tag.startsWith('Collection: '))?.replace('Collection: ', '')
           };
         });
         setPins(parsedPins);

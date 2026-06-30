@@ -111,6 +111,13 @@ export const MapView: React.FC<MapViewProps> = ({ pins, onSelectPin }) => {
       ppill.style.borderColor = c.tail;
       ppill.innerHTML = `${p.emoji} ★${p.rating} · ${p.name.split(' ')[0]}`;
 
+      if (p.rank || p.tags.includes('EatMap Best')) {
+        const topBadge = document.createElement('span');
+        topBadge.className = 'pin-top';
+        topBadge.textContent = 'TOP';
+        el.appendChild(topBadge);
+      }
+
       const ptail = document.createElement('div');
       ptail.className = 'ptail';
       ptail.style.background = c.bg;

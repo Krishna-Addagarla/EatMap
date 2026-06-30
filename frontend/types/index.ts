@@ -20,6 +20,15 @@ export interface Pin {
   photos: string[];
   latitude: number;
   longitude: number;
+  source?: string;
+  sourceUrl?: string;
+  rank?: number;
+  cuisines?: string[];
+  costForTwo?: string;
+  hours?: string;
+  distance?: string;
+  restaurantType?: string;
+  collection?: string;
 }
 
 export interface UserList {

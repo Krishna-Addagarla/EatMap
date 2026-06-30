@@ -59,6 +59,8 @@ class PlaceRead(BaseModel):
     value_score: float
     wait_score: float
     ai_summary: str
+    external_provider: str | None = None
+    external_id: str | None = None
     photo_urls: list[str] = []
 
     model_config = {"from_attributes": True}
