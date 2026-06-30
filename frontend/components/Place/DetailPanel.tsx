@@ -86,6 +86,15 @@ export const DetailPanel: React.FC<DetailPanelProps> = ({
     showToast(`Rated ${val}★ — thanks!`);
   };
 
+  const handleDirections = () => {
+    if (pin.latitude && pin.longitude) {
+      window.open(`https://www.google.com/maps/dir/?api=1&destination=${pin.latitude},${pin.longitude}`, '_blank');
+      showToast('📍 Opening directions in Google Maps!');
+    } else {
+      showToast('❌ Location coordinates not available');
+    }
+  };
+
   const hasOpen = pin.tags.includes('Open now');
   const legendBadge = pin.tags.find((t) => ['Legend', 'New', 'Trending'].includes(t));
   const cuisineText = pin.cuisines?.length ? pin.cuisines.join(', ') : pin.cat;
@@ -155,7 +164,7 @@ export const DetailPanel: React.FC<DetailPanelProps> = ({
         </div>
 
         <div className="dp-actions">
-          <button className="dact primary" onClick={() => showToast('📍 Directions loaded!')}>📍 Directions</button>
+          <button className="dact primary" onClick={handleDirections}>📍 Directions</button>
           <button className={`dact ${isFavorite ? 'active-fav' : ''}`} onClick={handleSaveFavorite}>
             {isFavorite ? '⭐ Saved' : '☆ Save'}
           </button>
@@ -168,6 +177,7 @@ export const DetailPanel: React.FC<DetailPanelProps> = ({
         </div>
 
         <div className="been-bar">
+
           <div className="been-lbl">Have you visited?</div>
           <button
             className={`been-btn ${isVisited ? 'done' : ''}`}
