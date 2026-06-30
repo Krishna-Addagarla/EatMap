@@ -26,7 +26,21 @@ class Settings(BaseSettings):
     anthropic_api_key: str | None = None
     anthropic_model: str = "claude-sonnet-4-20250514"
 
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+
+    @field_validator("database_url", mode="before")
+    @classmethod
+    def coerce_db_scheme(cls, value: str) -> str:
+        """
+        Accept bare postgresql:// or postgres:// URLs (e.g. from Supabase) and
+        rewrite them to the asyncpg driver scheme that SQLAlchemy async requires.
+        """
+        if isinstance(value, str):
+            if value.startswith("postgres://"):
+                value = "postgresql+asyncpg://" + value[len("postgres://"):]
+            elif value.startswith("postgresql://"):
+                value = "postgresql+asyncpg://" + value[len("postgresql://"):]
+        return value
 
     @field_validator("backend_cors_origins", mode="before")
     @classmethod

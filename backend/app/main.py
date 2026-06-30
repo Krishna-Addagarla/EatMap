@@ -1,3 +1,11 @@
+import asyncio
+import sys
+
+# Python 3.8+ defaults to ProactorEventLoop on Windows, which breaks asyncpg's
+# SSL/TLS DNS resolution. SelectorEventLoop works correctly with asyncpg on Windows.
+if sys.platform == "win32":
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
