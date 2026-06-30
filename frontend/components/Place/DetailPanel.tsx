@@ -7,6 +7,8 @@ import { RatingBars } from './RatingBars';
 import { PhotoStrip } from './PhotoStrip';
 import { apiFetch } from '../../services/api';
 
+import { useMapStore } from '../../store/mapStore';
+
 interface DetailPanelProps {
   pin: Pin | null;
   onClose: () => void;
@@ -20,6 +22,8 @@ export const DetailPanel: React.FC<DetailPanelProps> = ({
 }) => {
   const { visitedPins, pinStars, markVisited, setStarRating, showToast, token } = useUserStore();
   const { openAtlPicker, myLists, addMyList, addPinToList } = useListStore();
+  const { userLocation, setActiveRoute } = useMapStore();
+
 
 
   if (!pin) return <div className="dp"></div>;
@@ -86,12 +90,53 @@ export const DetailPanel: React.FC<DetailPanelProps> = ({
     showToast(`Rated ${val}★ — thanks!`);
   };
 
-  const handleDirections = () => {
-    if (pin.latitude && pin.longitude) {
-      window.open(`https://www.google.com/maps/dir/?api=1&destination=${pin.latitude},${pin.longitude}`, '_blank');
-      showToast('📍 Opening directions in Google Maps!');
-    } else {
-      showToast('❌ Location coordinates not available');
+  const handleDirections = async () => {
+    let startLoc = userLocation;
+    
+    if (!startLoc) {
+      showToast('📍 Getting your location...');
+      try {
+        const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: true,
+            timeout: 8000,
+            maximumAge: 0
+          });
+        });
+        
+        startLoc = {
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude
+        };
+        useMapStore.getState().setUserLocation(startLoc);
+      } catch (err: any) {
+        showToast('❌ Location permission required for directions.');
+        return;
+      }
+    }
+
+    if (!pin.latitude || !pin.longitude) {
+      showToast('❌ Restaurant coordinates not available');
+      return;
+    }
+
+    showToast('🛣️ Loading directions inside EatMap...');
+    try {
+      const response = await fetch(
+        `https://router.project-osrm.org/route/v1/driving/${startLoc.longitude},${startLoc.latitude};${pin.longitude},${pin.latitude}?overview=full&geometries=geojson`
+      );
+      if (!response.ok) throw new Error('OSRM API call failed');
+      const data = await response.json();
+      
+      if (data.routes && data.routes.length > 0) {
+        const routeGeoJSON = data.routes[0].geometry;
+        setActiveRoute(routeGeoJSON);
+        showToast('🗺️ Route directions displayed on map!');
+      } else {
+        throw new Error('No routes found');
+      }
+    } catch (err: any) {
+      showToast('❌ Failed to fetch route: ' + err.message);
     }
   };
 

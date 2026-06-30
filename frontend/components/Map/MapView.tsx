@@ -17,7 +17,7 @@ interface MapViewProps {
 }
 
 export const MapView: React.FC<MapViewProps> = ({ pins, onSelectPin }) => {
-  const { selectedPin, eatMap, zoomLevel, userLocation } = useMapStore();
+  const { selectedPin, eatMap, zoomLevel, userLocation, activeRoute } = useMapStore();
   const { showToast } = useUserStore();
 
   const {
@@ -83,6 +83,68 @@ export const MapView: React.FC<MapViewProps> = ({ pins, onSelectPin }) => {
       }
     };
   }, [eatMap, userLocation, useFallback]);
+
+  // Handle MapLibre GL Active Route Drawing
+  useEffect(() => {
+    if (!eatMap || useFallback) return;
+
+    const sourceId = 'directions-route';
+    const layerId = 'directions-route-line';
+
+    // Remove existing layer and source if they exist
+    if (eatMap.getLayer(layerId)) eatMap.removeLayer(layerId);
+    if (eatMap.getSource(sourceId)) eatMap.removeSource(sourceId);
+
+    if (!activeRoute) return;
+
+    try {
+      eatMap.addSource(sourceId, {
+        type: 'geojson',
+        data: {
+          type: 'Feature',
+          properties: {},
+          geometry: activeRoute
+        }
+      });
+
+      eatMap.addLayer({
+        id: layerId,
+        type: 'line',
+        source: sourceId,
+        layout: {
+          'line-join': 'round',
+          'line-cap': 'round'
+        },
+        paint: {
+          'line-color': '#10b981', // Emerald green glowing route line
+          'line-width': 5,
+          'line-opacity': 0.85
+        }
+      });
+
+      // Fit map view bounds to encompass both the user location and the selected restaurant
+      if (userLocation && selectedPin) {
+        const bounds = new maplibregl.LngLatBounds();
+        bounds.extend([userLocation.longitude, userLocation.latitude]);
+        bounds.extend([selectedPin.longitude, selectedPin.latitude]);
+        
+        // Add map margins/padding to avoid visual clash with DetailPanel
+        eatMap.fitBounds(bounds, {
+          padding: { top: 60, bottom: 250, left: 180, right: 60 },
+          duration: 1000
+        });
+      }
+    } catch (err) {
+      console.warn('Failed to add directions route to MapLibre:', err);
+    }
+
+    return () => {
+      if (eatMap) {
+        if (eatMap.getLayer(layerId)) eatMap.removeLayer(layerId);
+        if (eatMap.getSource(sourceId)) eatMap.removeSource(sourceId);
+      }
+    };
+  }, [eatMap, activeRoute, useFallback, userLocation, selectedPin]);
 
   // Handle MapLibre GL Pin Markers Lifecycle
   useEffect(() => {
