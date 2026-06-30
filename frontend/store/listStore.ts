@@ -21,6 +21,7 @@ interface ListState {
   setListVis: (vis: 'public' | 'private') => void;
   addMyList: (list: UserList) => void;
   incrementListCount: (index: number) => void;
+  addPinToList: (index: number, pinId: number) => void;
 }
 
 export const useListStore = create<ListState>((set) => ({
@@ -45,6 +46,21 @@ export const useListStore = create<ListState>((set) => ({
     const updated = [...state.myLists];
     if (updated[index]) {
       updated[index] = { ...updated[index], count: updated[index].count + 1 };
+    }
+    return { myLists: updated };
+  }),
+  addPinToList: (index, pinId) => set((state) => {
+    const updated = [...state.myLists];
+    if (updated[index]) {
+      const items = updated[index].items || [];
+      if (!items.includes(pinId)) {
+        const newItems = [...items, pinId];
+        updated[index] = {
+          ...updated[index],
+          items: newItems,
+          count: newItems.length
+        };
+      }
     }
     return { myLists: updated };
   })

@@ -19,7 +19,8 @@ export const DetailPanel: React.FC<DetailPanelProps> = ({
   onShare
 }) => {
   const { visitedPins, pinStars, markVisited, setStarRating, showToast, token } = useUserStore();
-  const { openAtlPicker } = useListStore();
+  const { openAtlPicker, myLists, addMyList, addPinToList } = useListStore();
+
 
   if (!pin) return <div className="dp"></div>;
 
@@ -27,9 +28,44 @@ export const DetailPanel: React.FC<DetailPanelProps> = ({
   const isVisited = visitedPins.includes(pin.id);
   const myStars = pinStars[pin.id] || 0;
 
+  const isFavorite = myLists.some((l) => (l.name === 'Favorites' || l.emoji === '⭐') && l.items?.includes(pin.id));
+
   const handleMarkVisited = () => {
     markVisited(pin.id);
     showToast('Marked as visited!');
+  };
+
+  const handleSaveFavorite = async () => {
+    if (isFavorite) {
+      showToast('Already saved to Favorites!');
+      return;
+    }
+
+    if (token && pin.apiId) {
+      try {
+        await apiFetch(`/lists/favorites/${pin.apiId}`, {
+          method: 'POST'
+        });
+      } catch (err: any) {
+        showToast(err.message);
+        return;
+      }
+    }
+    
+    const favListIndex = myLists.findIndex((l) => l.name === 'Favorites' || l.emoji === '⭐');
+    if (favListIndex !== -1) {
+      addPinToList(favListIndex, pin.id);
+    } else {
+      addMyList({
+        name: 'Favorites',
+        emoji: '⭐',
+        count: 1,
+        vis: 'private',
+        desc: 'My saved places',
+        items: [pin.id]
+      });
+    }
+    showToast('⭐ Saved to Favorites!');
   };
 
   const handleSetStars = async (val: number) => {
@@ -120,7 +156,9 @@ export const DetailPanel: React.FC<DetailPanelProps> = ({
 
         <div className="dp-actions">
           <button className="dact primary" onClick={() => showToast('📍 Directions loaded!')}>📍 Directions</button>
-          <button className="dact" onClick={() => showToast('⭐ Saved to Favorites!')}>⭐ Save</button>
+          <button className={`dact ${isFavorite ? 'active-fav' : ''}`} onClick={handleSaveFavorite}>
+            {isFavorite ? '⭐ Saved' : '☆ Save'}
+          </button>
           <button className="dact" onClick={() => openAtlPicker(pin)}>
             ➕ Add to list
           </button>

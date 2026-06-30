@@ -9,7 +9,7 @@ export const AddToListPicker: React.FC = () => {
     atlPin, 
     closeAtlPicker, 
     myLists, 
-    incrementListCount
+    addPinToList
   } = useListStore();
 
   const { token, showToast } = useUserStore();
@@ -44,25 +44,13 @@ export const AddToListPicker: React.FC = () => {
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ place_id: atlPin.apiId })
             });
+            addPinToList(idx, atlPin.id);
           }
         }
-        
-        // Reload list configurations from backend
-        const lists = await apiFetch<any[]>('/lists');
-        useListStore.setState({
-          myLists: lists.map((l) => ({
-            apiId: l.id,
-            name: l.name,
-            emoji: l.emoji,
-            count: l.items?.length || 0,
-            vis: l.visibility,
-            desc: l.description || 'Saved places'
-          }))
-        });
       } else {
-        // Local increment
+        // Local save
         checkedIndices.forEach((idx) => {
-          incrementListCount(idx);
+          addPinToList(idx, atlPin.id);
         });
       }
       

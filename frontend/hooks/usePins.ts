@@ -15,18 +15,26 @@ export function usePins() {
   const token = useUserStore((state) => state.token);
 
   // Load lists from backend
-  const loadMyLists = async () => {
+  const loadMyLists = async (currentPins?: Pin[]) => {
     try {
       const lists = await apiFetch<any[]>('/lists');
       setMyLists(
-        lists.map((l) => ({
-          apiId: l.id,
-          name: l.name,
-          emoji: l.emoji,
-          count: l.items?.length || 0,
-          vis: l.visibility,
-          desc: l.description || 'Saved places'
-        }))
+        lists.map((l) => {
+          const items = l.items?.map((item: any) => {
+            const matchedPin = (currentPins || pins).find(p => p.apiId === item.place?.id);
+            return matchedPin ? matchedPin.id : null;
+          }).filter((id: any) => id !== null) || [];
+          
+          return {
+            apiId: l.id,
+            name: l.name,
+            emoji: l.emoji,
+            count: items.length,
+            vis: l.visibility === 'public' ? 'public' : 'private',
+            desc: l.description || 'Saved places',
+            items: items
+          };
+        })
       );
     } catch (err: any) {
       console.info('Could not load lists from backend:', err.message);
@@ -83,13 +91,20 @@ export function usePins() {
           };
         });
         setPins(parsedPins);
-      }
-      
-      if (token) {
-        await loadMyLists();
+        
+        if (token) {
+          await loadMyLists(parsedPins);
+        }
+      } else {
+        if (token) {
+          await loadMyLists();
+        }
       }
     } catch (err: any) {
       console.info('Using local demo data (FastAPI server offline):', err.message);
+      if (token) {
+        await loadMyLists();
+      }
     } finally {
       setIsLoading(false);
     }
@@ -118,18 +133,6 @@ export function usePins() {
 
     // Filter by Occasion
     if (activeOccasion) {
-      // Occasions map to tags or category matching
-      // Line 495+:
-      // Date spots -> Romantic restaurants & rooftops
-      // Party places -> High-energy venues & lounges
-      // Dinner -> Top dinner restaurants
-      // Team lunch -> Great for groups & outings
-      // Rooftop -> Sky-high restaurants & bars
-      // Family dinner -> Spacious & family-friendly
-      // Street food -> Best street food clusters
-      // Pub night -> Bars, pubs & nightlife
-      // Birthday -> Celebration-worthy venues
-      // Solo / work -> WFH-friendly cafes & quiet corners
       const tagMap: Record<string, string[]> = {
         '💑 Date spots': ['romantic', 'date spot', 'date night', 'rooftop'],
         '🎉 Party places': ['party', 'bar', 'live music', 'cocktails'],

@@ -32,12 +32,13 @@ export interface Pin {
 }
 
 export interface UserList {
-  apiId?: number;
+  apiId?: string | number;
   name: string;
   emoji: string;
   count: number;
   vis: 'public' | 'private';
   desc: string;
+  items?: number[];
 }
 
 export interface CommunityList {

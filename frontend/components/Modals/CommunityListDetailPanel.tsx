@@ -1,10 +1,20 @@
 import React from 'react';
-import { Pin, CommunityList } from '../../types';
+import { Pin } from '../../types';
 import { useUserStore } from '../../store/userStore';
 import { CATEGORY_STYLES, DEFAULT_STYLE } from '../../data/categories';
 
+interface GeneralList {
+  name: string;
+  emoji: string;
+  count: number;
+  saves?: number;
+  desc?: string;
+  items?: number[];
+  vis?: 'public' | 'private';
+}
+
 interface CommunityListDetailPanelProps {
-  list: CommunityList | null;
+  list: GeneralList | null;
   pins: Pin[];
   onClose: () => void;
   onSelectPin: (pin: Pin) => void;
@@ -40,7 +50,11 @@ export const CommunityListDetailPanel: React.FC<CommunityListDetailPanelProps> =
     ]
   };
 
-  const items = clistSpots[list.name] || [];
+  // If list has explicit items array, map them to pins. Otherwise fall back to mock mappings.
+  const items = list.items
+    ? list.items.map((id) => ({ id, note: 'Saved spot' }))
+    : clistSpots[list.name] || [];
+
   const spotsData = items
     .map((item) => {
       const pin = pins.find((p) => p.id === item.id);
@@ -54,11 +68,15 @@ export const CommunityListDetailPanel: React.FC<CommunityListDetailPanelProps> =
         <button className="lp-back" onClick={onClose}>←</button>
         <div>
           <div className="clist-title">{list.emoji} {list.name}</div>
-          <div className="clist-sub">{list.count} places · {list.saves} saves</div>
+          <div className="clist-sub">
+            {list.count} places{list.saves !== undefined ? ` · ${list.saves} saves` : ''}
+          </div>
         </div>
-        <button className="clist-save-btn" onClick={() => showToast('✅ List saved to My EatMap!')}>
-          Save list
-        </button>
+        {list.saves !== undefined && (
+          <button className="clist-save-btn" onClick={() => showToast('✅ List saved to My EatMap!')}>
+            Save list
+          </button>
+        )}
       </div>
 
       <div className="clist-body">
@@ -67,10 +85,12 @@ export const CommunityListDetailPanel: React.FC<CommunityListDetailPanelProps> =
             <div className="clist-stat-n">{list.count}</div>
             <div className="clist-stat-l">Spots</div>
           </div>
-          <div className="clist-stat">
-            <div className="clist-stat-n">{list.saves}</div>
-            <div className="clist-stat-l">Saves</div>
-          </div>
+          {list.saves !== undefined && (
+            <div className="clist-stat">
+              <div className="clist-stat-n">{list.saves}</div>
+              <div className="clist-stat-l">Saves</div>
+            </div>
+          )}
           <div className="clist-stat">
             <div className="clist-stat-n">4.6</div>
             <div className="clist-stat-l">Avg rating</div>

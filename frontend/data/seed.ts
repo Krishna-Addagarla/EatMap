@@ -795,9 +795,9 @@ const CURATED_NIGHTLIFE_PINS: Pin[] = [
 export const INITIAL_PINS: Pin[] = [...CURATED_RESTAURANT_PINS, ...CURATED_NIGHTLIFE_PINS, ...BASE_PINS];
 
 export const INITIAL_USER_LISTS: UserList[] = [
-  { name: 'Best Biryanis 2025', emoji: '🍛', count: 7, vis: 'public', desc: 'My all-time faves' },
-  { name: 'WFH Cafe Circuit', emoji: '💻', count: 5, vis: 'public', desc: 'WiFi + great chai' },
-  { name: 'Date Night Spots', emoji: '💑', count: 4, vis: 'private', desc: 'Personal faves' }
+  { name: 'Best Biryanis 2025', emoji: '🍛', count: 3, vis: 'public', desc: 'My all-time faves', items: [18, 19, 20] },
+  { name: 'WFH Cafe Circuit', emoji: '💻', count: 3, vis: 'public', desc: 'WiFi + great chai', items: [6, 7, 23] },
+  { name: 'Date Night Spots', emoji: '💑', count: 3, vis: 'private', desc: 'Personal faves', items: [1, 3, 9] }
 ];
 
 export const INITIAL_COMMUNITY_LISTS: CommunityList[] = [

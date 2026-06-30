@@ -1463,6 +1463,17 @@ input, textarea {
   opacity: .88;
 }
 
+.dact.active-fav {
+  border-color: #fbbf24 !important;
+  color: #fbbf24 !important;
+  background: rgba(251, 191, 36, 0.05) !important;
+}
+
+.dact.active-fav:hover {
+  background: rgba(251, 191, 36, 0.1) !important;
+  color: #fbbf24 !important;
+}
+
 .been-bar {
   display: flex;
   align-items: center;
@@ -1715,7 +1726,7 @@ input, textarea {
   position: absolute;
   inset: 0;
   background: var(--bg);
-  z-index: 70;
+  z-index: 120;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -1898,7 +1909,7 @@ input, textarea {
   display: flex;
   align-items: center;
   gap: 10px;
-  z-index: 76;
+  z-index: 110;
   backdrop-filter: blur(6px);
 }
 
@@ -2838,7 +2849,7 @@ input, textarea {
   position: absolute;
   inset: 0;
   background: var(--bg);
-  z-index: 72;
+  z-index: 130;
   display: flex;
   flex-direction: column;
   overflow: hidden;

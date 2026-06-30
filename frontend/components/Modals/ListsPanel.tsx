@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { Pin, CommunityList } from '../../types';
+import { Pin } from '../../types';
 import { useListStore } from '../../store/listStore';
-import { useUserStore } from '../../store/userStore';
 import { CommunityListDetailPanel } from './CommunityListDetailPanel';
 
 interface ListsPanelProps {
@@ -18,9 +17,9 @@ export const ListsPanel: React.FC<ListsPanelProps> = ({
   onSelectPin
 }) => {
   const { myLists, communityLists, openCreateListModal } = useListStore();
-  const { showToast } = useUserStore();
+
   
-  const [selectedClist, setSelectedClist] = useState<CommunityList | null>(null);
+  const [selectedClist, setSelectedClist] = useState<any | null>(null);
 
   if (!isOpen) return null;
 
@@ -42,7 +41,7 @@ export const ListsPanel: React.FC<ListsPanelProps> = ({
           <div
             key={idx}
             className="list-card"
-            onClick={() => showToast(`Opening list: ${list.name}`)}
+            onClick={() => setSelectedClist(list)}
           >
             <div className="list-em">{list.emoji}</div>
             <div className="list-info">
@@ -79,7 +78,10 @@ export const ListsPanel: React.FC<ListsPanelProps> = ({
         list={selectedClist}
         pins={pins}
         onClose={() => setSelectedClist(null)}
-        onSelectPin={onSelectPin}
+        onSelectPin={(pin) => {
+          onSelectPin(pin);
+          onClose();
+        }}
       />
     </div>
   );
